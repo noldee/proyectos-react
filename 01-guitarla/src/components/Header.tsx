@@ -1,12 +1,24 @@
+import type { CartItem } from "../types";
+
+type HeaderProps = {
+  cart: CartItem[];
+  isEmpty: boolean;
+  cartTotal: number;
+  removeFrontCart: (id: number) => void;
+  increaseQuantity: (id: number) => void;
+  decreaseQuantity: (id: number) => void;
+  clearCart: () => void;
+};
+
 export const Header = ({
   cart,
+  isEmpty,
+  cartTotal,
   removeFrontCart,
   increaseQuantity,
   decreaseQuantity,
   clearCart,
-  isEmpty,
-  cartTotal,
-}) => {
+}: HeaderProps) => {
   // State Derivado
 
   return (

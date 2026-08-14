@@ -1,5 +1,12 @@
-export const Guitar = ({ guitarItem, addToCart }) => {
-  const { id, name, image, description, price } = guitarItem;
+import type { GuitarType } from "../types";
+
+type GuitarProps = {
+  guitarItem: GuitarType;
+  addToCart: (item: GuitarType) => void;
+};
+
+export const Guitar = ({ guitarItem, addToCart }: GuitarProps) => {
+  const { name, image, description, price } = guitarItem;
 
   return (
     <div className="col-md-6  col-lg-4 my-4 row align-items-center">
