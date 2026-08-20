@@ -1,12 +1,14 @@
+import type React from "react";
 import { formatCurrency } from "../helpers";
 import type { MenuItems, OrderItem } from "../types";
+import type { OrderAction } from "../reducer/oder-reducer";
 
 type OrderContentsProps = {
   order: OrderItem[];
-  removeItem: (id: MenuItems["id"]) => void;
+  dispatch: React.Dispatch<OrderAction>;
 };
 
-export const OrderContents = ({ order, removeItem }: OrderContentsProps) => {
+export const OrderContents = ({ order, dispatch }: OrderContentsProps) => {
   return (
     <div>
       <h1 className="text-4xl font-black">Consumo</h1>
@@ -28,7 +30,9 @@ export const OrderContents = ({ order, removeItem }: OrderContentsProps) => {
             </div>
             <button
               className="bg-red-600 h-8 w-8 rounded-full text-white font-black"
-              onClick={() => removeItem(item.id)}
+              onClick={() =>
+                dispatch({ type: "remove-item", payload: { id: item.id } })
+              }
             >
               X
             </button>
