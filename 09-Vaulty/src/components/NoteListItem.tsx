@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef } from "react";
-import type { NoteFile } from "../hooks/useNotes";
+import { TreeNode } from "../hooks/useNotes";
+import { confirm } from "@tauri-apps/plugin-dialog";
 
 function displayName(fileName: string) {
   return fileName.replace(/\.md$/, "").replace(/-/g, " ");
 }
 
 interface NoteListItemProps {
-  note: NoteFile;
+  note: TreeNode;
   active: boolean;
   onSelect: () => void;
   onRename: (newTitle: string) => void;
@@ -83,9 +84,13 @@ export function NoteListItem({
         {displayName(note.name)}
       </button>
       <button
-        onClick={(e) => {
+        onClick={async (e) => {
           e.stopPropagation();
-          if (confirm(`¿Eliminar "${displayName(note.name)}"?`)) {
+          const yes = await confirm(`¿Eliminar "${displayName(note.name)}"?`, {
+            title: "Eliminar nota",
+            kind: "warning",
+          });
+          if (yes) {
             onDelete();
           }
         }}

@@ -1,30 +1,37 @@
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
-import ResizableImage from "tiptap-extension-resize-image";
+import { ResizableImage } from "./ResizableImage";
 import TableRow from "@tiptap/extension-table-row";
 import TableCell from "@tiptap/extension-table-cell";
 import TableHeader from "@tiptap/extension-table-header";
 import { Markdown } from "tiptap-markdown";
 import { useEffect, useRef } from "react";
 import { Table } from "@tiptap/extension-table";
+import { CodeBlockLowlight } from "@tiptap/extension-code-block-lowlight";
+import { createLowlight, common } from "lowlight";
 
 interface NoteEditorProps {
   content: string;
   onChange: (markdown: string) => void;
 }
 
+const lowlight = createLowlight(common);
+
 export function NoteEditor({ content, onChange }: NoteEditorProps) {
-  const isInternalUpdate = useRef(false);
+  const lastEmitted = useRef<string | null>(null);
 
   const editor = useEditor({
+    immediatelyRender: false,
     extensions: [
-      StarterKit,
-      Placeholder.configure({ placeholder: "Escribe algo..." }),
-      ResizableImage.configure({
-        maxWidth: 500,
-        minWidth: 100,
+      StarterKit.configure({
+        codeBlock: false,
       }),
+      CodeBlockLowlight.configure({
+        lowlight,
+      }),
+      Placeholder.configure({ placeholder: "Escribe algo..." }),
+      ResizableImage,
       Table.configure({ resizable: true }),
       TableRow,
       TableCell,
@@ -36,10 +43,10 @@ export function NoteEditor({ content, onChange }: NoteEditorProps) {
     ],
     content,
     onUpdate: ({ editor }) => {
-      isInternalUpdate.current = true;
       const markdown = (
         editor.storage as unknown as { markdown: { getMarkdown: () => string } }
       ).markdown.getMarkdown();
+      lastEmitted.current = markdown;
       onChange(markdown);
     },
     editorProps: {
@@ -95,13 +102,12 @@ export function NoteEditor({ content, onChange }: NoteEditorProps) {
 
   useEffect(() => {
     if (!editor) return;
-    if (isInternalUpdate.current) {
-      isInternalUpdate.current = false;
-      return;
-    }
-    editor.commands.setContent(content);
+    if (content === lastEmitted.current) return;
+    queueMicrotask(() => {
+      editor.commands.setContent(content);
+      lastEmitted.current = content;
+    });
   }, [content, editor]);
-
   return (
     <div className="flex-1 overflow-y-auto p-8">
       <EditorContent editor={editor} />

@@ -1,9 +1,9 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
+@import "highlight.js/styles/github-dark.css";
 
+.ProseMirror .prose img,
 .ProseMirror img {
-  max-width: 60%;
-  height: auto;
-  display: block;
-  border-radius: 8px;
+  margin-top: 0.15rem;
+  margin-bottom: 0.15rem;
 }
