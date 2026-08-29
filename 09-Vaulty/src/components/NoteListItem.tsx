@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import type { NoteFile } from "../hooks/useNotes";
 
 function displayName(fileName: string) {
-  return fileName.replace(/\.md$/, "");
+  return fileName.replace(/\.md$/, "").replace(/-/g, " ");
 }
 
 interface NoteListItemProps {
@@ -10,6 +10,7 @@ interface NoteListItemProps {
   active: boolean;
   onSelect: () => void;
   onRename: (newTitle: string) => void;
+  onDelete: () => void;
 }
 
 export function NoteListItem({
@@ -17,6 +18,7 @@ export function NoteListItem({
   active,
   onSelect,
   onRename,
+  onDelete,
 }: NoteListItemProps) {
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState(displayName(note.name));
@@ -63,21 +65,35 @@ export function NoteListItem({
   }
 
   return (
-    <button
-      onClick={onSelect}
-      onKeyDown={(e) => {
-        if (e.key === "F2") {
-          e.preventDefault();
-          setEditing(true);
-        }
-      }}
-      className={`w-full text-left px-2.5 py-2 rounded-lg text-sm mb-0.5 truncate transition ${
-        active
-          ? "bg-neutral-200 text-neutral-900"
-          : "text-neutral-600 hover:bg-neutral-100"
-      }`}
-    >
-      {displayName(note.name)}
-    </button>
+    <div className="group relative">
+      <button
+        onClick={onSelect}
+        onKeyDown={(e) => {
+          if (e.key === "F2") {
+            e.preventDefault();
+            setEditing(true);
+          }
+        }}
+        className={`w-full text-left px-2.5 py-2 pr-7 rounded-lg text-sm mb-0.5 truncate transition ${
+          active
+            ? "bg-neutral-200 text-neutral-900"
+            : "text-neutral-600 hover:bg-neutral-100"
+        }`}
+      >
+        {displayName(note.name)}
+      </button>
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          if (confirm(`¿Eliminar "${displayName(note.name)}"?`)) {
+            onDelete();
+          }
+        }}
+        className="absolute right-1.5 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 text-neutral-400 hover:text-red-500 transition p-1"
+        title="Eliminar nota"
+      >
+        ✕
+      </button>
+    </div>
   );
 }

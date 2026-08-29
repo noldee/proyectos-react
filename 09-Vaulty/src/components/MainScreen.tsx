@@ -3,20 +3,25 @@ import { useNotes } from "../hooks/useNotes";
 import { useNoteContent } from "../hooks/useNoteContent";
 import { NoteTitle } from "./NoteTitle";
 import { NoteListItem } from "./NoteListItem";
+import { NoteEditor } from "./NoteEditor";
 
 function displayName(fileName: string) {
-  return fileName.replace(/\.md$/, "");
+  return fileName.replace(/\.md$/, "").replace(/-/g, " ");
 }
 
 interface MainScreenProps {
   vaultPath: string;
+  onExitVault: () => void;
 }
 
-export function MainScreen({ vaultPath }: MainScreenProps) {
-  const { notes, loading, createNote, renameNote } = useNotes(vaultPath);
+export function MainScreen({ vaultPath, onExitVault }: MainScreenProps) {
+  const { notes, loading, createNote, renameNote, deleteNote } =
+    useNotes(vaultPath);
   const [activePath, setActivePath] = useState<string | null>(null);
   const { content, updateContent, saved } = useNoteContent(activePath);
-  const vaultName = vaultPath.split("/").filter(Boolean).pop();
+
+  // Soporta tanto '/' (macOS/Linux) como '\' (Windows)
+  const vaultName = vaultPath.split(/[/\\]/).filter(Boolean).pop();
 
   const handleRename = async (newTitle: string) => {
     if (!activePath) return;
@@ -26,13 +31,16 @@ export function MainScreen({ vaultPath }: MainScreenProps) {
 
   return (
     <div className="h-screen flex">
+      {/* Sidebar Container */}
       <div className="w-56 bg-neutral-50 border-r border-neutral-200 flex flex-col">
+        {/* Header Vault */}
         <div className="px-3.5 pt-3.5 pb-2.5 flex items-center justify-between">
           <span className="text-sm font-medium text-neutral-900 truncate">
             {vaultName}
           </span>
         </div>
 
+        {/* Acción Crear Nota */}
         <div className="px-3.5 pb-2.5">
           <button
             onClick={async () => {
@@ -45,6 +53,7 @@ export function MainScreen({ vaultPath }: MainScreenProps) {
           </button>
         </div>
 
+        {/* Lista de Notas (Scrollable) */}
         <div className="flex-1 overflow-y-auto px-2">
           {loading && (
             <p className="px-2 py-2 text-xs text-neutral-400">Cargando...</p>
@@ -64,29 +73,40 @@ export function MainScreen({ vaultPath }: MainScreenProps) {
                 const newPath = await renameNote(note.path, newTitle);
                 if (newPath && activePath === note.path) setActivePath(newPath);
               }}
+              onDelete={async () => {
+                await deleteNote(note.path);
+                if (activePath === note.path) setActivePath(null);
+              }}
             />
           ))}
         </div>
+
+        {/* Footer Sidebar (Cambiar Vault) */}
+        <div className="px-3.5 py-2.5 border-t border-neutral-200">
+          <button
+            onClick={onExitVault}
+            className="w-full flex items-center gap-2 text-xs text-neutral-500 hover:text-neutral-800 transition"
+          >
+            <span>📁</span>
+            Cambiar vault
+          </button>
+        </div>
       </div>
 
+      {/* Editor Main Content */}
       <div className="flex-1 flex flex-col">
         {activePath ? (
           <>
             <div className="px-6 py-2.5 border-b border-neutral-200 flex items-center justify-between">
               <NoteTitle
-                title={displayName(activePath.split("/").pop() ?? "")}
+                title={displayName(activePath.split(/[/\\]/).pop() ?? "")}
                 onRename={handleRename}
               />
               <span className="text-xs text-neutral-400">
                 {saved ? "Guardado" : "Guardando..."}
               </span>
             </div>
-            <textarea
-              value={content}
-              onChange={(e) => updateContent(e.target.value)}
-              className="flex-1 p-8 text-[15px] leading-relaxed text-neutral-900 outline-none resize-none"
-              placeholder="Escribe algo..."
-            />
+            <NoteEditor content={content} onChange={updateContent} />
           </>
         ) : (
           <div className="flex-1 flex items-center justify-center">

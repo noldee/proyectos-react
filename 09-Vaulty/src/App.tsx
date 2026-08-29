@@ -9,7 +9,9 @@ function App() {
     return <WelcomeScreen onVaultReady={setVaultPath} />;
   }
 
-  return <MainScreen vaultPath={vaultPath} />;
+  return (
+    <MainScreen vaultPath={vaultPath} onExitVault={() => setVaultPath(null)} />
+  );
 }
 
 export default App;
