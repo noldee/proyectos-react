@@ -7,3 +7,13 @@
   margin-top: 0.15rem;
   margin-bottom: 0.15rem;
 }
+
+.wiki-link {
+  color: #2563eb;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: rgba(37, 99, 235, 0.3);
+}
+.wiki-link:hover {
+  text-decoration-color: #2563eb;
+}

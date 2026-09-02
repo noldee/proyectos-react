@@ -10,15 +10,33 @@ import { useEffect, useRef } from "react";
 import { Table } from "@tiptap/extension-table";
 import { CodeBlockLowlight } from "@tiptap/extension-code-block-lowlight";
 import { createLowlight, common } from "lowlight";
+import { WikiLinkNode } from "../extensions/WikiLinkNode";
 
 interface NoteEditorProps {
   content: string;
   onChange: (markdown: string) => void;
+  onNavigateWikiLink: (title: string) => void;
 }
 
 const lowlight = createLowlight(common);
 
-export function NoteEditor({ content, onChange }: NoteEditorProps) {
+function preprocessWikiLinks(markdown: string): string {
+  return markdown.replace(
+    /\[\[([^\]|]+?)(?:\s+AS\s+"([^"]+)")?\]\]/g,
+    (_match, title, alias) => {
+      const attrs = alias
+        ? `title="${title.trim()}" alias="${alias.trim()}"`
+        : `title="${title.trim()}"`;
+      return `<span data-wiki-link ${attrs}></span>`;
+    },
+  );
+}
+
+export function NoteEditor({
+  content,
+  onChange,
+  onNavigateWikiLink,
+}: NoteEditorProps) {
   const lastEmitted = useRef<string | null>(null);
 
   const editor = useEditor({
@@ -40,8 +58,9 @@ export function NoteEditor({ content, onChange }: NoteEditorProps) {
         html: false,
         transformPastedText: true,
       }),
+      WikiLinkNode.configure({ onNavigate: onNavigateWikiLink }),
     ],
-    content,
+    content: preprocessWikiLinks(content),
     onUpdate: ({ editor }) => {
       const markdown = (
         editor.storage as unknown as { markdown: { getMarkdown: () => string } }
@@ -104,7 +123,7 @@ export function NoteEditor({ content, onChange }: NoteEditorProps) {
     if (!editor) return;
     if (content === lastEmitted.current) return;
     queueMicrotask(() => {
-      editor.commands.setContent(content);
+      editor.commands.setContent(preprocessWikiLinks(content));
       lastEmitted.current = content;
     });
   }, [content, editor]);

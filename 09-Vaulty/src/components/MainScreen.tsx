@@ -1,9 +1,26 @@
-import { useState } from "react";
-import { useNotes } from "../hooks/useNotes";
+import { useRef, useState } from "react";
+import { TreeNode, useNotes } from "../hooks/useNotes";
 import { useNoteContent } from "../hooks/useNoteContent";
 import { useSearch } from "../hooks/useSearch";
 import { TreeItem } from "./TreeItem";
 import { NoteEditor } from "./NoteEditor";
+
+function findNoteByTitle(nodes: TreeNode[], title: string): TreeNode | null {
+  const target = title.trim().toLowerCase();
+  for (const node of nodes) {
+    if (node.type === "file") {
+      const name = node.name
+        .replace(/\.md$/, "")
+        .replace(/-/g, " ")
+        .toLowerCase();
+      if (name === target) return node;
+    } else if (node.children) {
+      const found = findNoteByTitle(node.children, title);
+      if (found) return found;
+    }
+  }
+  return null;
+}
 
 interface MainScreenProps {
   vaultPath: string;
@@ -20,6 +37,25 @@ export function MainScreen({ vaultPath, onExitVault }: MainScreenProps) {
   const [search, setSearch] = useState("");
   const filteredNotes = useSearch(tree, search);
 
+  const creatingRef = useRef(false);
+  const handleNavigateWikiLink = async (title: string) => {
+    const found = findNoteByTitle(tree, title); // ← la llamada real
+    if (found) {
+      setActivePath(found.path);
+      return;
+    }
+    if (creatingRef.current) return;
+    creatingRef.current = true;
+    try {
+      const path = await createNote();
+      if (path) {
+        const renamed = await renameNote(path, title);
+        setActivePath(renamed ?? path);
+      }
+    } finally {
+      creatingRef.current = false;
+    }
+  };
   return (
     <div className="h-screen flex">
       <div className="w-56 bg-neutral-50 border-r border-neutral-200 flex flex-col">
@@ -146,7 +182,11 @@ export function MainScreen({ vaultPath, onExitVault }: MainScreenProps) {
                 {saved ? "Guardado" : "Guardando..."}
               </span>
             </div>
-            <NoteEditor content={content} onChange={updateContent} />
+            <NoteEditor
+              content={content}
+              onChange={updateContent}
+              onNavigateWikiLink={handleNavigateWikiLink}
+            />
           </>
         ) : (
           <div className="flex-1 flex items-center justify-center">
